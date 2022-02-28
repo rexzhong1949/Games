@@ -26,4 +26,4 @@ from .breakoutclone import BreakoutcloneGame
 from .twentyfourpoint import TwentyfourPointGame
 from .flipcardbymemory import FlipCardByMemoryGame
 from .twozerofoureight import TwoZeroFourEightGame
-from .voicecontrolpikachu import VoiceControlPikachuGame
+#from .voicecontrolpikachu import VoiceControlPikachuGame

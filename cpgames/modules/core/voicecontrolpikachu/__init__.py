@@ -1,2 +1,2 @@
 '''initialize'''
-from .voicecontrolpikachu import VoiceControlPikachuGame
+#from .voicecontrolpikachu import VoiceControlPikachuGame

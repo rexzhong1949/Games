@@ -7,6 +7,7 @@ Author:
     Charles的皮卡丘
 '''
 from pickle import TRUE
+from tkinter import CENTER
 from typing import Dict
 import pygame
 import random
@@ -41,6 +42,8 @@ class GameLevel():
             'river_group': pygame.sprite.Group(),
             'tree_group': pygame.sprite.Group()
         }
+
+        self.speed = 8
         # 解析关卡文件
         self.__parseLevelFile()
     '''
@@ -86,6 +89,8 @@ class GameLevel():
         smarttank_shoot = True
         return smarttank_dir,smarttank_shoot
     '''
+    
+    '''
     #第三个策略，追着离家最近的坦克打，效果比前两个好
     def smarttank_move(self, scene_elems:Dict, player_tanks_group:pygame.sprite.Group, enemy_tanks_group:pygame.sprite.Group, home:Home ):
         smarttank_dir = "STOP"
@@ -114,6 +119,71 @@ class GameLevel():
                 
         smarttank_shoot = True
         return smarttank_dir,smarttank_shoot
+    '''
+
+    #第四个策略，还是追着离家最近的坦克打，希望解决被障碍卡住的问题
+    def smarttank_move(self, screen,scene_elems:Dict, player_tanks_group:pygame.sprite.Group, enemy_tanks_group:pygame.sprite.Group, home:Home ):
+        smarttank_dir = "STOP"
+        smarttank = player_tanks_group.sprites()[1]
+
+        if len(enemy_tanks_group)>0:
+            most_threaten = enemy_tanks_group.sprites()[0]
+            most_near_distance = 1000000000000
+            #print(most_threaten)
+            for enemytank in enemy_tanks_group.spritedict:
+                #print(enemytank)
+                distance_to_home = (enemytank.rect.centerx-home.rect.centerx)**2 + (enemytank.rect.centery-home.rect.centery)**2
+                #print(distance_to_home,most_near_distance)
+                if distance_to_home<most_near_distance:
+                    most_threaten = enemytank
+                    most_near_distance = distance_to_home
+
+            speed = (0,0)
+            x_distans = (most_threaten.rect.left-smarttank.rect.left)**2
+            y_distans = (most_threaten.rect.top-smarttank.rect.top)**2
+            if ( x_distans>y_distans):
+                if most_threaten.rect.left < smarttank.rect.left:
+                    smarttank_dir = "LEFT"
+                    speed = (-self.speed, 0)
+                elif most_threaten.rect.left > smarttank.rect.left:
+                    smarttank_dir = "RIGHT"
+                    speed = (self.speed, 0)
+            else:
+                if most_threaten.rect.top < smarttank.rect.top:
+                    smarttank_dir = "UP"
+                    speed = (0, -self.speed)
+                elif most_threaten.rect.top > smarttank.rect.top:
+                    smarttank_dir = "DOWN"
+                    speed = (0, self.speed)
+            
+            pygame.draw.rect( screen, (255,0,0),most_threaten.rect,5)
+            pygame.draw.line( screen,(255,0,0),home.rect.center,most_threaten.rect.center,5)
+
+            rect_ori = smarttank.rect
+            smarttank.rect = smarttank.rect.move(speed)
+            # 如果碰到场景元素卡住，跟踪目标方向进行摆脱。
+            for key, value in scene_elems.items():
+                if key in ['brick_group', 'iron_group', 'river_group']:
+                    if pygame.sprite.spritecollide(smarttank, value, False, None):
+                        #如果想左右移动被卡住，则需要上下移动，跟着目标的方向
+                        if smarttank_dir == "LEFT" or smarttank_dir == "RIGHT":
+                            if smarttank.rect.top > most_threaten.rect.top:
+                                smarttank_dir = "UP"
+                            else:
+                                smarttank_dir = "DOWN"    
+                        #如果想上下移动被卡住，则需要左右移动，跟着目标的方向
+                        elif smarttank_dir == "UP" or smarttank_dir == "DOWN":
+                            if smarttank.rect.left > most_threaten.rect.left:
+                                smarttank_dir = "LEFT"
+                            else:
+                                smarttank_dir = "RIGHT"    
+            #以上只能判断，不能真的移动smarttank，所以要恢复其位置，先前暂存在rect_ori里的
+            smarttank.rect = rect_ori
+        #一直按着开火键
+        smarttank_shoot = True
+        
+        return smarttank_dir,smarttank_shoot
+
 
     '''开始游戏'''
     def start(self, screen):
@@ -128,7 +198,7 @@ class GameLevel():
         foods_group = pygame.sprite.Group()
         # 定义敌方坦克生成事件
         generate_enemies_event = pygame.constants.USEREVENT
-        pygame.time.set_timer(generate_enemies_event, 20000)
+        pygame.time.set_timer(generate_enemies_event, 5000)
         # 我方大本营
         home = Home(position=self.home_position, images=resource_loader.images['home'])
         # 我方坦克
@@ -211,7 +281,7 @@ class GameLevel():
                         #self.sounds['fire'].play() if tank_player1.tanklevel < 2 else self.sounds['Gunfire'].play()
                         player_bullets_group.add(bullet)
             # 玩家二, ↑↓←→移动, 小键盘0键射击
-            smarttank_dir,smarttank_shoot = self.smarttank_move( self.scene_elems, player_tanks_group, enemy_tanks_group, home)
+            smarttank_dir,smarttank_shoot = self.smarttank_move( screen,self.scene_elems, player_tanks_group, enemy_tanks_group, home)
             if self.is_dual_mode and (tank_player2.num_lifes >= 0):
                 #if key_pressed[pygame.K_UP]:
                 if smarttank_dir == "UP":

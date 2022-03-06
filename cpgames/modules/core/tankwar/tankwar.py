@@ -129,12 +129,13 @@ class TankWarGame(PygameBaseGame):
             # 初始化
             screen, resource_loader, cfg = self.screen, self.resource_loader, self.cfg
             # 开始界面
-            is_dual_mode = GameStartInterface(screen, cfg, resource_loader)
+            #is_dual_mode = GameStartInterface(screen, cfg, resource_loader)
+            is_dual_mode = True
             # 关卡数
             levelfilepaths = [os.path.join(cfg.LEVELFILEDIR, filename) for filename in sorted(os.listdir(cfg.LEVELFILEDIR))]
             # 主循环
             for idx, levelfilepath in enumerate(levelfilepaths):
-                SwitchLevelIterface(screen, cfg, resource_loader, idx + 1)
+                #SwitchLevelIterface(screen, cfg, resource_loader, idx + 1)
                 game_level = GameLevel(idx+1, levelfilepath, is_dual_mode, cfg, resource_loader)
                 is_win = game_level.start(screen)
                 if not is_win: break

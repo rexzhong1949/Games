@@ -6,6 +6,8 @@ Author:
 微信公众号:
     Charles的皮卡丘
 '''
+from pickle import TRUE
+from typing import Dict
 import pygame
 import random
 from .sprites import *
@@ -41,6 +43,78 @@ class GameLevel():
         }
         # 解析关卡文件
         self.__parseLevelFile()
+    '''
+    #最简单的策略，追着第一个敌方坦克，先到同样高度，再追着打
+    def smarttank_move(self, scene_elems:Dict, player_tanks_group:pygame.sprite.Group, enemy_tanks_group:pygame.sprite.Group, home:Home ):
+        smarttank_dir = "STOP"
+        smarttank = player_tanks_group.sprites()[1]
+        if len(enemy_tanks_group)>0:
+            enemytank = enemy_tanks_group.sprites()[0]
+            if enemytank.rect.top < smarttank.rect.top:
+                smarttank_dir = "UP"
+            elif enemytank.rect.top > smarttank.rect.top:
+                smarttank_dir = "DOWN"
+            elif enemytank.rect.left < smarttank.rect.left:
+                smarttank_dir = "LEFT"
+            elif enemytank.rect.left > smarttank.rect.left:
+                smarttank_dir = "RIGHT"
+                
+        smarttank_shoot = True
+        return smarttank_dir,smarttank_shoot
+    '''
+    
+    '''
+    #第二种策略，追着打第一个敌方坦克，缩小水平和垂直距离
+    def smarttank_move(self, scene_elems:Dict, player_tanks_group:pygame.sprite.Group, enemy_tanks_group:pygame.sprite.Group, home:Home ):
+        smarttank_dir = "STOP"
+        smarttank = player_tanks_group.sprites()[1]
+        if len(enemy_tanks_group)>0:
+            enemytank = enemy_tanks_group.sprites()[0]
+            x_distans = (enemytank.rect.left-smarttank.rect.left)**2
+            y_distans = (enemytank.rect.top-smarttank.rect.top)**2
+            if ( x_distans>y_distans):
+                if enemytank.rect.left < smarttank.rect.left:
+                    smarttank_dir = "LEFT"
+                elif enemytank.rect.left > smarttank.rect.left:
+                    smarttank_dir = "RIGHT"
+            else:
+                if enemytank.rect.top < smarttank.rect.top:
+                    smarttank_dir = "UP"
+                elif enemytank.rect.top > smarttank.rect.top:
+                    smarttank_dir = "DOWN"
+                
+        smarttank_shoot = True
+        return smarttank_dir,smarttank_shoot
+    '''
+    #第三个策略，追着离家最近的坦克打，效果比前两个好
+    def smarttank_move(self, scene_elems:Dict, player_tanks_group:pygame.sprite.Group, enemy_tanks_group:pygame.sprite.Group, home:Home ):
+        smarttank_dir = "STOP"
+        smarttank = player_tanks_group.sprites()[1]
+
+        if len(enemy_tanks_group)>0:
+            most_threaten = enemy_tanks_group.sprites()[0]
+            most_near_distance = 1000000000000
+            for enemytank in enemy_tanks_group.sprites():
+                distance_to_home = (enemytank.rect.centerx-home.rect.centerx)**2 + (enemytank.rect.centery-home.rect.centery)**2
+                if distance_to_home<most_near_distance:
+                    most_threaten = enemytank
+
+            x_distans = (most_threaten.rect.left-smarttank.rect.left)**2
+            y_distans = (most_threaten.rect.top-smarttank.rect.top)**2
+            if ( x_distans>y_distans):
+                if most_threaten.rect.left < smarttank.rect.left:
+                    smarttank_dir = "LEFT"
+                elif most_threaten.rect.left > smarttank.rect.left:
+                    smarttank_dir = "RIGHT"
+            else:
+                if most_threaten.rect.top < smarttank.rect.top:
+                    smarttank_dir = "UP"
+                elif most_threaten.rect.top > smarttank.rect.top:
+                    smarttank_dir = "DOWN"
+                
+        smarttank_shoot = True
+        return smarttank_dir,smarttank_shoot
+
     '''开始游戏'''
     def start(self, screen):
         screen, resource_loader = pygame.display.set_mode((self.width+self.panel_width, self.height)), self.resource_loader
@@ -65,7 +139,7 @@ class GameLevel():
         )
         player_tanks_group.add(tank_player1)
         if self.is_dual_mode:
-            tank_player2 = PlayerTank(
+            tank_player2 = SmartPlayerTank(
                 name='player2', position=self.player_tank_positions[1], player_tank_images=resource_loader.images['player'], 
                 border_len=self.border_len, screensize=[self.width, self.height], bullet_images=resource_loader.images['bullet'], 
                 protected_mask=resource_loader.images['others']['protect'], boom_image=resource_loader.images['others']['boom_static']
@@ -79,7 +153,7 @@ class GameLevel():
                 food_images=resource_loader.images['food'], boom_image=resource_loader.images['others']['boom_static']
             ))
         # 游戏开始音乐
-        self.sounds['start'].play()
+        #self.sounds['start'].play()
         clock = pygame.time.Clock()
         # 该关卡通过与否的flags
         is_win = False
@@ -88,6 +162,11 @@ class GameLevel():
         while is_running:
             screen.fill((0, 0, 0))
             screen.blit(background_img, (0, 0))
+
+            #试图放入按键事件，没有成功，直接修改key_pressed数组
+            #uevent=pygame.event.Event(pygame.KEYDOWN,{"key":pygame.K_UP})
+            #pygame.event.post(uevent)
+            
             # 用户事件捕捉
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -107,6 +186,7 @@ class GameLevel():
                                 enemy_tanks_group.add(enemy_tank)
             # --用户按键
             key_pressed = pygame.key.get_pressed()
+            
             # 玩家一, WSAD移动, 空格键射击
             if tank_player1.num_lifes >= 0:
                 if key_pressed[pygame.K_w]:
@@ -128,31 +208,39 @@ class GameLevel():
                 elif key_pressed[pygame.K_SPACE]:
                     bullet = tank_player1.shoot()
                     if bullet:
-                        self.sounds['fire'].play() if tank_player1.tanklevel < 2 else self.sounds['Gunfire'].play()
+                        #self.sounds['fire'].play() if tank_player1.tanklevel < 2 else self.sounds['Gunfire'].play()
                         player_bullets_group.add(bullet)
             # 玩家二, ↑↓←→移动, 小键盘0键射击
+            smarttank_dir,smarttank_shoot = self.smarttank_move( self.scene_elems, player_tanks_group, enemy_tanks_group, home)
             if self.is_dual_mode and (tank_player2.num_lifes >= 0):
-                if key_pressed[pygame.K_UP]:
+                #if key_pressed[pygame.K_UP]:
+                if smarttank_dir == "UP":
                     player_tanks_group.remove(tank_player2)
                     tank_player2.move('up', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player2)
-                elif key_pressed[pygame.K_DOWN]:
+                #elif key_pressed[pygame.K_DOWN]:
+                elif smarttank_dir == "DOWN":
                     player_tanks_group.remove(tank_player2)
                     tank_player2.move('down', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player2)
-                elif key_pressed[pygame.K_LEFT]:
+                #elif key_pressed[pygame.K_LEFT]:
+                elif smarttank_dir == "LEFT":
                     player_tanks_group.remove(tank_player2)
                     tank_player2.move('left', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player2)
-                elif key_pressed[pygame.K_RIGHT]:
+                #elif key_pressed[pygame.K_RIGHT]:
+                elif smarttank_dir == "RIGHT":
                     player_tanks_group.remove(tank_player2)
                     tank_player2.move('right', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player2)
-                elif key_pressed[pygame.K_KP0]:
+
+                #elif key_pressed[pygame.K_KP0]:
+                if smarttank_shoot == True:
+                    smarttank_shoot = False
                     bullet = tank_player2.shoot()
                     if bullet:
                         player_bullets_group.add(bullet)
-                        self.sounds['fire'].play() if tank_player2.tanklevel < 2 else self.sounds['Gunfire'].play()
+                        #self.sounds['fire'].play() if tank_player2.tanklevel < 2 else self.sounds['Gunfire'].play()
             # 碰撞检测
             # --子弹和砖墙
             pygame.sprite.groupcollide(player_bullets_group, self.scene_elems.get('brick_group'), True, True)
@@ -387,6 +475,7 @@ class GameLevel():
             # 场上敌方坦克最大数量
             elif line.startswith('%MAXENEMYNUM'):
                 self.max_enemy_num = int(line.split(':')[-1])
+                print( "max enemy:"+str(self.max_enemy_num))
             # 大本营位置
             elif line.startswith('%HOMEPOS'):
                 self.home_position = line.split(':')[-1]

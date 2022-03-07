@@ -122,22 +122,22 @@ class GameLevel():
     '''
 
     #第四个策略，还是追着离家最近的坦克打，希望解决被障碍卡住的问题
-    def smarttank_move(self, screen,scene_elems:Dict, player_tanks_group:pygame.sprite.Group, enemy_tanks_group:pygame.sprite.Group, home:Home ):
+    def smarttank_move(self, player, screen,scene_elems:Dict, player_tanks_group:pygame.sprite.Group, enemy_tanks_group:pygame.sprite.Group, home:Home ):
         smarttank_dir = "STOP"
-        smarttank = player_tanks_group.sprites()[1]
+
+        #这里比较郁闷，在外部有对player_tanks_group的add和remove，每次进来这里调用
+        #两个坦克的顺序都交换过，看了好久打印才发现
+        smarttank = player_tanks_group.sprites()[0]
+        #print(smarttank.rect)
 
         if len(enemy_tanks_group)>0:
             most_threaten = enemy_tanks_group.sprites()[0]
             most_near_distance = 1000000000000
-            #print(most_threaten)
             for enemytank in enemy_tanks_group.spritedict:
-                #print(enemytank)
                 distance_to_home = (enemytank.rect.centerx-home.rect.centerx)**2 + (enemytank.rect.centery-home.rect.centery)**2
-                #print(distance_to_home,most_near_distance)
                 if distance_to_home<most_near_distance:
                     most_threaten = enemytank
                     most_near_distance = distance_to_home
-
             speed = (0,0)
             x_distans = (most_threaten.rect.left-smarttank.rect.left)**2
             y_distans = (most_threaten.rect.top-smarttank.rect.top)**2
@@ -155,7 +155,7 @@ class GameLevel():
                 elif most_threaten.rect.top > smarttank.rect.top:
                     smarttank_dir = "DOWN"
                     speed = (0, self.speed)
-            
+
             pygame.draw.rect( screen, (255,0,0),most_threaten.rect,5)
             pygame.draw.line( screen,(255,0,0),home.rect.center,most_threaten.rect.center,5)
 
@@ -179,9 +179,12 @@ class GameLevel():
                                 smarttank_dir = "RIGHT"    
             #以上只能判断，不能真的移动smarttank，所以要恢复其位置，先前暂存在rect_ori里的
             smarttank.rect = rect_ori
-        #一直按着开火键
-        smarttank_shoot = True
-        
+        #为避免自己打基地，简单的不能瞄准home开枪
+        if (smarttank.rect.centery < home.rect.top) and (smarttank.rect.centerx < home.rect.left or smarttank.rect.centerx > home.rect.right):
+            smarttank_shoot = True
+        else:
+            smarttank_shoot = False
+       
         return smarttank_dir,smarttank_shoot
 
 
@@ -202,7 +205,7 @@ class GameLevel():
         # 我方大本营
         home = Home(position=self.home_position, images=resource_loader.images['home'])
         # 我方坦克
-        tank_player1 = PlayerTank(
+        tank_player1 = SmartPlayerTank(
             name='player1', position=self.player_tank_positions[0], player_tank_images=resource_loader.images['player'], 
             border_len=self.border_len, screensize=[self.width, self.height], bullet_images=resource_loader.images['bullet'], 
             protected_mask=resource_loader.images['others']['protect'], boom_image=resource_loader.images['others']['boom_static']
@@ -257,56 +260,69 @@ class GameLevel():
             # --用户按键
             key_pressed = pygame.key.get_pressed()
             
+            smarttank_dir = "STOP"
+            smarttank_shoot = False
             # 玩家一, WSAD移动, 空格键射击
-            if tank_player1.num_lifes >= 0:
-                if key_pressed[pygame.K_w]:
+            smarttank_dir,smarttank_shoot = self.smarttank_move( 1,screen,self.scene_elems, player_tanks_group, enemy_tanks_group, home)
+            if self.is_dual_mode and (tank_player1.num_lifes >= 0):
+                #if key_pressed[pygame.K_UP]:
+                if smarttank_dir == "UP":
                     player_tanks_group.remove(tank_player1)
                     tank_player1.move('up', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player1)
-                elif key_pressed[pygame.K_s]:
+                #elif key_pressed[pygame.K_DOWN]:
+                elif smarttank_dir == "DOWN":
                     player_tanks_group.remove(tank_player1)
                     tank_player1.move('down', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player1)
-                elif key_pressed[pygame.K_a]:
+                #elif key_pressed[pygame.K_LEFT]:
+                elif smarttank_dir == "LEFT":
                     player_tanks_group.remove(tank_player1)
                     tank_player1.move('left', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player1)
-                elif key_pressed[pygame.K_d]:
+                #elif key_pressed[pygame.K_RIGHT]:
+                elif smarttank_dir == "RIGHT":
                     player_tanks_group.remove(tank_player1)
                     tank_player1.move('right', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player1)
-                elif key_pressed[pygame.K_SPACE]:
+
+                #elif key_pressed[pygame.K_KP0]:
+                if smarttank_shoot == True:
+                    smarttank_shoot = False
                     bullet = tank_player1.shoot()
                     if bullet:
-                        #self.sounds['fire'].play() if tank_player1.tanklevel < 2 else self.sounds['Gunfire'].play()
                         player_bullets_group.add(bullet)
+                        #self.sounds['fire'].play() if tank_player1.tanklevel < 2 else self.sounds['Gunfire'].play()
+            
+            smarttank_dir2 = "STOP"
+            smarttank_shoot2 = False
             # 玩家二, ↑↓←→移动, 小键盘0键射击
-            smarttank_dir,smarttank_shoot = self.smarttank_move( screen,self.scene_elems, player_tanks_group, enemy_tanks_group, home)
+            smarttank_dir2,smarttank_shoot2 = self.smarttank_move( 2,screen,self.scene_elems, player_tanks_group, enemy_tanks_group, home)
             if self.is_dual_mode and (tank_player2.num_lifes >= 0):
                 #if key_pressed[pygame.K_UP]:
-                if smarttank_dir == "UP":
+                if smarttank_dir2 == "UP":
                     player_tanks_group.remove(tank_player2)
                     tank_player2.move('up', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player2)
                 #elif key_pressed[pygame.K_DOWN]:
-                elif smarttank_dir == "DOWN":
+                elif smarttank_dir2 == "DOWN":
                     player_tanks_group.remove(tank_player2)
                     tank_player2.move('down', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player2)
                 #elif key_pressed[pygame.K_LEFT]:
-                elif smarttank_dir == "LEFT":
+                elif smarttank_dir2 == "LEFT":
                     player_tanks_group.remove(tank_player2)
                     tank_player2.move('left', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player2)
                 #elif key_pressed[pygame.K_RIGHT]:
-                elif smarttank_dir == "RIGHT":
+                elif smarttank_dir2 == "RIGHT":
                     player_tanks_group.remove(tank_player2)
                     tank_player2.move('right', self.scene_elems, player_tanks_group, enemy_tanks_group, home)
                     player_tanks_group.add(tank_player2)
 
                 #elif key_pressed[pygame.K_KP0]:
-                if smarttank_shoot == True:
-                    smarttank_shoot = False
+                if smarttank_shoot2 == True:
+                    smarttank_shoot2 = False
                     bullet = tank_player2.shoot()
                     if bullet:
                         player_bullets_group.add(bullet)

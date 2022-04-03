@@ -58,7 +58,8 @@ class AircraftWarGame(PygameBaseGame):
         # 初始化
         screen, resource_loader, cfg = self.screen, self.resource_loader, self.cfg
         # 游戏开始界面
-        num_player = StartInterface(screen, cfg, resource_loader)
+        #num_player = StartInterface(screen, cfg, resource_loader)
+        num_player = 1
         # 开始游戏
         if num_player == 1:
             while True:
@@ -68,6 +69,26 @@ class AircraftWarGame(PygameBaseGame):
             while True:
                 self.GamingInterface(num_player=2, screen=screen)
                 EndInterface(screen, cfg, resource_loader)
+
+    ############################################################
+    def smartmove(self,player:pygame.sprite.Sprite,asteroid_group:pygame.sprite.Group):
+        direction = None
+        shoot = None        
+        if player.rect.bottom<550:
+            direction = "down"
+            return direction,shoot    
+        if len(asteroid_group)>0:
+            asteroid = asteroid_group.sprites()[0]
+            print(asteroid.rect.centerx,player.rect.centerx)
+            if (player.rect.centerx-asteroid.rect.centerx)>8:
+                direction = "left"
+            elif (player.rect.centerx-asteroid.rect.centerx)<-8:
+                direction = "right"
+            else:
+                shoot = True
+
+        return direction,shoot
+
     '''游戏界面'''
     def GamingInterface(self, num_player, screen):
         # 初始化
@@ -100,7 +121,10 @@ class AircraftWarGame(PygameBaseGame):
             pressed_keys = pygame.key.get_pressed()
             for idx, player in enumerate(player_group):
                 direction = None
+                shoot = None
                 if idx == 0:
+                    direction,shoot=self.smartmove(player,asteroid_group)
+                    '''
                     if pressed_keys[pygame.K_UP]:
                         direction = 'up'
                     elif pressed_keys[pygame.K_DOWN]:
@@ -109,13 +133,17 @@ class AircraftWarGame(PygameBaseGame):
                         direction = 'left'
                     elif pressed_keys[pygame.K_RIGHT]:
                         direction = 'right'
+                    '''
                     if direction:
                         player.move(direction)
-                    if pressed_keys[pygame.K_j]:
+
+                    #if pressed_keys[pygame.K_j]:
+                    if shoot==True:
                         if player.cooling_time == 0:
                             fire_sound.play()
                             bullet_group.add(player.shot())
                             player.cooling_time = 20
+                            shoot=False
                 elif idx == 1:
                     if pressed_keys[pygame.K_w]:
                         direction = 'up'

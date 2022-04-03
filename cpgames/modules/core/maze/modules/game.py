@@ -71,8 +71,10 @@ class RandomMaze():
         showText(screen, self.font, 'S', (255, 0, 0), (self.border_size[0]-10, self.border_size[1]))
         showText(screen, self.font, 'D', (255, 0, 0), (self.border_size[0]+(self.maze_size[1]-1)*self.block_size, self.border_size[1]+self.maze_size[0]*self.block_size+5))
     '''创建迷宫'''
+    #关键函数，看懂如何创建的迷宫，理解迷宫的数据结构
     @staticmethod
     def createMaze(maze_size, block_size, border_size):
+        #
         def nextBlock(block_now, blocks_list):
             directions = ['top', 'bottom', 'left', 'right']
             blocks_around = dict(zip(directions, [None]*4))
@@ -121,6 +123,8 @@ class RandomMaze():
                             block_now.has_walls[3] = False
                         break
             return block_next
+
+
         blocks_list = [[Block([col, row], block_size, border_size) for col in range(maze_size[1])] for row in range(maze_size[0])]
         block_now = blocks_list[0][0]
         records = []

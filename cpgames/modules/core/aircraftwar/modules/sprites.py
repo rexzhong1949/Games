@@ -96,9 +96,11 @@ class Ship(pygame.sprite.Sprite):
     '''移动飞船'''
     def move(self, direction):
         if direction == 'left':
-            self.position['x'] = max(-self.speed['x'] + self.position['x'], -10)
+            #self.position['x'] = max(-self.speed['x'] + self.position['x'], -10)
+            self.position['x'] = max(-self.speed['x'] + self.position['x'], -5)
         elif direction == 'right':
-            self.position['x'] = min(self.speed['x'] + self.position['x'], 918)
+            #self.position['x'] = min(self.speed['x'] + self.position['x'], 918)
+            self.position['x'] = min(self.speed['x'] + self.position['x'], 928)
         elif direction == 'up':
             self.position['y'] = max(-self.speed['y'] + self.position['y'], -10)
         elif direction == 'down':

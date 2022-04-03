@@ -8,6 +8,7 @@ Author:
 '''
 import os
 import pygame
+import random
 from ...utils import QuitGame
 from ..base import PygameBaseGame
 from .modules import showText, Button, Interface, Block, RandomMaze, Hero
@@ -18,14 +19,15 @@ class Config():
     # 根目录
     rootdir = os.path.split(os.path.abspath(__file__))[0]
     # FPS
-    FPS = 20
+    FPS = 12000
     # 屏幕大小
     SCREENSIZE = (800, 625)
     # 标题
     TITLE = '走迷宫小游戏 —— Charles的皮卡丘'
     # 块大小
     BLOCKSIZE = 15
-    MAZESIZE = (35, 50) # num_rows * num_cols
+    #MAZESIZE = (35, 50) # num_rows * num_cols
+    MAZESIZE = (20, 20) # num_rows * num_cols
     BORDERSIZE = (25, 50) # 25 * 2 + 50 * 15 = 800, 50 * 2 + 35 * 15 = 625
     # 背景音乐路径
     BGM_PATH = os.path.join(rootdir, 'resources/audios/bgm.mp3')
@@ -47,9 +49,9 @@ class MazeGame(PygameBaseGame):
         screen, resource_loader, cfg = self.screen, self.resource_loader, self.cfg
         font = pygame.font.SysFont('Consolas', 15)
         # 播放背景音乐
-        resource_loader.playbgm()
+        #resource_loader.playbgm()
         # 开始界面
-        Interface(screen, cfg, 'game_start')
+        #Interface(screen, cfg, 'game_start')
         # 记录关卡数
         num_levels = 0
         # 记录最少用了多少步通关
@@ -66,9 +68,10 @@ class MazeGame(PygameBaseGame):
             # --统计步数
             num_steps = 0
             # --关卡内主循环
+            hero_pos = [0,0]
             while True:
                 dt = clock.tick(cfg.FPS)
-                screen.fill((255, 255, 255))
+                screen.fill((199, 237, 204))
                 is_move = False
                 # ----↑↓←→控制hero
                 for event in pygame.event.get():
@@ -83,6 +86,26 @@ class MazeGame(PygameBaseGame):
                             is_move = hero_now.move('left', maze_now)
                         elif event.key == pygame.K_RIGHT:
                             is_move = hero_now.move('right', maze_now)
+                
+                while not is_move:
+                    directions = ['up', 'down', 'left', 'right']
+                    direction = random.choice(directions)
+                    #print(direction)
+                    is_move = hero_now.move(direction, maze_now)
+                    #这个is_move可以让我们看到迷宫某个坐标的某一面是否墙壁，可以让我们在绕回来后
+                    #减少碰壁的次数。
+                    '''if is_move:
+                        if direction=="up":
+                            hero_pos[1]-=1
+                        elif direction=='down':
+                            hero_pos[1]+=1
+                        elif direction=="left":
+                            hero_pos[0]-=1
+                        else:
+                            hero_pos[0]+=1
+                        print(hero_pos)
+                    '''    
+                
                 num_steps += int(is_move)
                 hero_now.draw(screen)
                 maze_now.draw(screen)
@@ -102,4 +125,4 @@ class MazeGame(PygameBaseGame):
                 if best_scores > num_steps:
                     best_scores = num_steps
             # --关卡切换
-            Interface(screen, cfg, mode='game_switch')
+            #Interface(screen, cfg, mode='game_switch')

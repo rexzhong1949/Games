@@ -37,7 +37,7 @@ class CPGames():
     def initialize(self):
         supported_games = {
             #'ski': SkiGame,
-            #'maze': MazeGame,
+            'maze': MazeGame,
             #'gobang': GobangGame,
             #'tetris': TetrisGame,
             #'pacman': PacmanGame,
@@ -52,7 +52,7 @@ class CPGames():
             #'flappybird': FlappyBirdGame,
             #'angrybirds': AngryBirdsGame,
             #'magictower': MagicTowerGame,
-            'aircraftwar': AircraftWarGame,
+            #'aircraftwar': AircraftWarGame,
             #'bunnybadger': BunnyBadgerGame,
             #'minesweeper': MineSweeperGame,
             #'greedysnake': GreedySnakeGame,

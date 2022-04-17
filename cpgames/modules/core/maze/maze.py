@@ -12,7 +12,7 @@ import random
 from ...utils import QuitGame
 from ..base import PygameBaseGame
 from .modules import showText, Button, Interface, Block, RandomMaze, Hero
-
+import copy
 
 '''配置类'''
 class Config():
@@ -63,6 +63,10 @@ class MazeGame(PygameBaseGame):
             screen = pygame.display.set_mode(cfg.SCREENSIZE)
             # --随机生成关卡地图
             maze_now = RandomMaze(cfg.MAZESIZE, cfg.BLOCKSIZE, cfg.BORDERSIZE,screen)
+            #is_visited这个标识在创建完迷宫后对迷宫就没用了，正好用在后来找出路上。
+            for blockline in maze_now.blocks_list:
+                for block in blockline:
+                    block.is_visited = False
             # --生成hero
             hero_now = Hero(resource_loader.images['hero'], [0, 0], cfg.BLOCKSIZE, cfg.BORDERSIZE)
             # --统计步数
@@ -70,15 +74,18 @@ class MazeGame(PygameBaseGame):
             # --关卡内主循环
             path = []
             records = []
+            direction_array = []
             start_point = hero_now.rect.center
             block_now = maze_now.blocks_list[0][0]
-
+            block_now.is_visited = True
+            records.append(block_now)
+            path.append(hero_now.rect.center)
             '''我希望设计出自动探索迷宫，并记录下所走路径，并能把它用红色线条描绘出来的功能'''
             RED = (255,0,0)
             BG_COLOR = (199, 237, 204)
             while True:
                 dt = clock.tick(cfg.FPS)
-                screen.fill(BG_COLOR)
+                
                 is_move = False
                 # ----↑↓←→控制hero
                 for event in pygame.event.get():
@@ -92,12 +99,74 @@ class MazeGame(PygameBaseGame):
                         elif event.key == pygame.K_LEFT:
                             is_move = hero_now.move('left', maze_now)
                         elif event.key == pygame.K_RIGHT:
-                            is_move = hero_now.move('right', maze_now)
-                
-                previous_direction = 'none'
-                is_move_back = False
+                            #is_move = hero_now.move('right', maze_now)
+                            screen.fill(BG_COLOR)
+                            blocks_list = maze_now.blocks_list
+                            directions = ['up', 'down', 'left', 'right']
+                            blocks_around = dict(zip(directions, [None]*4))
+                            block_next = None
+                            count = 0
+                            # 查看上边block，条件是判断不是最顶上的block
+                            if not block_now.has_walls[0]:
+                                block_now_top = blocks_list[block_now.coordinate[1]-1][block_now.coordinate[0]]
+                                if block_now_top.is_visited == False:
+                                    blocks_around['up'] = block_now_top
+                                    count += 1
+                            # 查看下边block
+                            if not block_now.has_walls[1]:
+                                block_now_bottom = blocks_list[block_now.coordinate[1]+1][block_now.coordinate[0]]
+                                if block_now_bottom.is_visited == False:
+                                    blocks_around['down'] = block_now_bottom
+                                    count += 1
+                            # 查看左边block
+                            if not block_now.has_walls[2]:
+                                block_now_left = blocks_list[block_now.coordinate[1]][block_now.coordinate[0]-1]
+                                if block_now_left.is_visited == False:
+                                    blocks_around['left'] = block_now_left
+                                    count += 1
+                            # 查看右边block
+                            if not block_now.has_walls[3]:
+                                block_now_right = blocks_list[block_now.coordinate[1]][block_now.coordinate[0]+1]
+                                if block_now_right.is_visited == False:
+                                    blocks_around['right'] = block_now_right
+                                    count += 1
+                            #上面一段把当前块的上下左右块都放入到blocks_around里了
+                            
+                            if count > 0:
+                                while True:
+                                    direction = random.choice(directions)
+                                    if blocks_around[direction] == None:
+                                        continue
+                                    
+                                    block_now = blocks_around.get(direction)
+                                    block_now.is_visited = True
+                                    #把移动方向压栈是为了走入死胡同后可以退回来
+                                    direction_array.append(direction)
+                                    is_move = hero_now.move(direction, maze_now)
+                                    records.append(block_now)
+                                    path.append(hero_now.rect.center)
+                                    break
+                            else:
+                                #如果走入死胡同，从移动方向栈中弹出上一步的移动方向，反向移动回到上一步
+                                pre_direction = direction_array.pop()
+                                if pre_direction=='up':
+                                    hero_now.move('down', maze_now)
+                                elif pre_direction=='down':
+                                    hero_now.move('up', maze_now)
+                                elif pre_direction=='left':
+                                    hero_now.move('right', maze_now)
+                                elif pre_direction=='right':
+                                    hero_now.move('left', maze_now)
+                                
+                                block_now = records.pop()
+                                block_now = records.pop()
+                                path.pop()                
+                            p1 = start_point
+                            for point in path:
+                                pygame.draw.line( screen,RED,p1, point,2)
+                                p1 = point
                 #随机移动的代码
-                
+                '''
                 while not is_move:
                     directions = ['up', 'down', 'left', 'right']
                     direction = random.choice(directions)
@@ -110,54 +179,8 @@ class MazeGame(PygameBaseGame):
                 for point in path:
                     pygame.draw.line( screen,RED,p1, point,2)
                     p1 = point
-                
+                '''
 
-           
-'''
-                blocks_list = maze_now.blocks_list
-                directions = ['up', 'down', 'left', 'right']
-                blocks_around = dict(zip(directions, [None]*4))
-                block_next = None
-                count = 0
-                # 查看上边block，条件是判断不是最顶上的block
-                if not block_now.has_walls[0]:
-                    block_now_top = blocks_list[block_now.coordinate[1]-1][block_now.coordinate[0]]
-                    blocks_around['up'] = block_now_top
-                    count += 1
-                # 查看下边block
-                if not block_now.has_walls[1]:
-                    block_now_bottom = blocks_list[block_now.coordinate[1]+1][block_now.coordinate[0]]
-                    blocks_around['down'] = block_now_bottom
-                    count += 1
-                # 查看左边block
-                if not block_now.has_walls[2]:
-                    block_now_left = blocks_list[block_now.coordinate[1]][block_now.coordinate[0]-1]
-                    blocks_around['left'] = block_now_left
-                    count += 1
-                # 查看右边block
-                if not block_now.has_walls[3]:
-                    block_now_right = blocks_list[block_now.coordinate[1]][block_now.coordinate[0]+1]
-                    blocks_around['right'] = block_now_right
-                    count += 1
-                #上面一段把当前块的上下左右块都放入到blocks_around里了
-                
-                if count > 0:
-                    while True:
-                        #随机选一个方向，把该方向上的墙打通。打通的方法就是把当前block和所选方向的下一个block的墙去掉。
-                        direction = random.choice(directions)
-                        if blocks_around[direction] == None:
-                            continue
-                        block_now = blocks_around.get(direction)
-                        is_move = hero_now.move(direction, maze_now)
-                        if is_move:
-                            path.append(hero_now.rect.center)
-                    
-                p1 = start_point
-                for point in path:
-                    pygame.draw.line( screen,RED,p1, point,2)
-                    p1 = point
-    
-'''
 
                 num_steps += int(is_move)
                 hero_now.draw(screen)
@@ -171,6 +194,7 @@ class MazeGame(PygameBaseGame):
                 if (hero_now.coordinate[0] == cfg.MAZESIZE[1] - 1) and (hero_now.coordinate[1] == cfg.MAZESIZE[0] - 1):
                     break
                 pygame.display.update()
+                is_move = False     #只是为了加断点，无用语句
             # --更新最优成绩
             if best_scores == 'None':
                 best_scores = num_steps

@@ -6,8 +6,9 @@ Author:
 微信公众号:
     Charles的皮卡丘
 '''
+from tarfile import RECORDSIZE
 import pygame
-
+import copy
 
 '''定义hero'''
 class Hero(pygame.sprite.Sprite):
@@ -19,6 +20,55 @@ class Hero(pygame.sprite.Sprite):
         self.coordinate = coordinate
         self.block_size = block_size
         self.border_size = border_size
+        self.path = [self.rect.center]
+
+    def SmartMove(self, maze):
+        #深度复制，避免修改影响原迷宫的数据    
+        blocks_list = copy.deepcopy(maze.blocks_list)
+        block_now = blocks_list[0][0]
+        exit_block = blocks_list[-1][-1]
+        records = []
+        next_block = None
+        while block_now!=exit_block:
+            is_move = False
+            print(block_now.coordinate)
+            #按上下左右的顺序，按深度遍历
+            if not block_now.has_walls[0]:      #up
+                next_block = blocks_list[block_now.coordinate[0]][block_now.coordinate[1]-1]
+                if next_block not in records:
+                    records.append(block_now)
+                    block_now = next_block
+                    is_move = True
+                    continue
+            if not block_now.has_walls[1]:      #down
+                next_block = blocks_list[block_now.coordinate[0]][block_now.coordinate[1]+1]
+                if next_block not in records:
+                    records.append(block_now)
+                    block_now = next_block
+                    is_move = True
+                    continue
+            if not block_now.has_walls[2]:      #left
+                next_block = blocks_list[block_now.coordinate[0]-1][block_now.coordinate[1]]
+                if next_block not in records:
+                    records.append(block_now)
+                    block_now = next_block
+                    is_move = True
+                    continue
+            if not block_now.has_walls[3]:      #right
+                next_block = blocks_list[block_now.coordinate[0]+1][block_now.coordinate[1]]
+                if next_block not in records:
+                    records.append(block_now)
+                    block_now = next_block
+                    is_move = True
+                    continue
+
+            if not is_move:
+                block_now = records.pop()            
+
+        records.append(block_now)
+        return records
+
+
     '''移动'''
     def move(self, direction, maze):
         blocks_list = maze.blocks_list

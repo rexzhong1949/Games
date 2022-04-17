@@ -138,12 +138,13 @@ class MazeGame(PygameBaseGame):
                                     if blocks_around[direction] == None:
                                         continue
                                     
+                                    #把移动方向和当前block压栈是为了走入死胡同后可以退回来
+                                    direction_array.append(direction)
+                                    records.append(block_now)
                                     block_now = blocks_around.get(direction)
                                     block_now.is_visited = True
-                                    #把移动方向压栈是为了走入死胡同后可以退回来
-                                    direction_array.append(direction)
                                     is_move = hero_now.move(direction, maze_now)
-                                    records.append(block_now)
+                                    
                                     path.append(hero_now.rect.center)
                                     break
                             else:
@@ -159,7 +160,7 @@ class MazeGame(PygameBaseGame):
                                     hero_now.move('left', maze_now)
                                 
                                 block_now = records.pop()
-                                block_now = records.pop()
+                                #block_now = records.pop()
                                 path.pop()                
                             p1 = start_point
                             for point in path:

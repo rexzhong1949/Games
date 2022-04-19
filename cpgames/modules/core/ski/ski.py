@@ -56,20 +56,22 @@ class SkierSprite(pygame.sprite.Sprite):
         self.images = images[:-1]
         self.image = self.images[self.direction]
         self.rect = self.image.get_rect()
-        self.rect.center = [320, 100]
+        self.rect.center = [320, 100]   #玩家的初始坐标
         self.speed = [self.direction, 6 - abs(self.direction) * 2]
     '''改变滑雪者的朝向. 负数为向左，正数为向右，0为向前'''
     def turn(self, num):
         self.direction += num
+        #限制方向在-2到2之间
         self.direction = max(-2, self.direction)
         self.direction = min(2, self.direction)
         center = self.rect.center
         self.image = self.images[self.direction]
         self.rect = self.image.get_rect()
         self.rect.center = center
+        #速度与方向有关，方向为0时表示垂直向下，速度是最快的
         self.speed = [self.direction, 6-abs(self.direction)*2]
         return self.speed
-    '''移动滑雪者'''
+    '''移动滑雪者,在画面中,滑雪者的y值是不变的,向下移动的效果是通过向上移动障碍物来实现的'''
     def move(self):
         self.rect.centerx += self.speed[0]
         self.rect.centerx = max(20, self.rect.centerx)
@@ -93,7 +95,7 @@ class ObstacleSprite(pygame.sprite.Sprite):
         self.rect.center = self.location
         self.attribute = attribute
         self.passed = False
-    '''移动'''
+    '''移动，向上移动障碍物使画面看起来滑雪者是向下滑行的'''
     def move(self, num):
         self.rect.centery = self.location[1] - num
 
@@ -109,9 +111,9 @@ class SkiGame(PygameBaseGame):
         # 初始化
         screen, resource_loader, cfg = self.screen, self.resource_loader, self.cfg
         # 播放背景音乐
-        resource_loader.playbgm()
+        #resource_loader.playbgm()
         # 游戏开始界面
-        self.ShowStartInterface(screen)
+        #self.ShowStartInterface(screen)
         # 实例化游戏精灵
         # --滑雪者
         skier = SkierSprite(resource_loader.images['skier'])
@@ -126,10 +128,15 @@ class SkiGame(PygameBaseGame):
         distance = 0
         # 记录当前的分数
         score = 0
-        # 记录当前的速度
+        # 记录当前的速度，0表示初始方向向下，速度6是最快的
         speed = [0, 6]
+
+        RED = (255,0,0)
+        hold = 0
+
         # 游戏主循环
         while True:
+            screen.fill((255, 255, 255))
             # --事件捕获
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -139,13 +146,46 @@ class SkiGame(PygameBaseGame):
                         speed = skier.turn(-1)
                     elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                         speed = skier.turn(1)
+            
+            #自动滑雪也就是根据障碍物的位置，操纵滑雪者的方向turn，得到小旗，避开树木
+            #计算距离最近的障碍物  
+            close_tree_distance = 100000000000000000
+            close_tree = None          
+            for obstacle in obstacles:
+                if obstacle.attribute=="flag" or obstacle.rect.centery<skier.rect.centery-32:
+                    continue
+                dd = (skier.rect.centerx-obstacle.rect.centerx)**2+(skier.rect.centery-obstacle.rect.centery)**2
+                if close_tree_distance>dd:
+                    close_tree_distance = dd
+                    close_tree = obstacle
+            pygame.draw.line( screen,RED,skier.rect.center, close_tree.rect.center,2)
+            if hold>10 and skier.rect.centerx>=close_tree.rect.centerx and skier.rect.centerx-close_tree.rect.centerx<64 and skier.rect.centerx<540:
+                speed = skier.turn(1)
+                hold = 0
+            elif hold>10 and skier.rect.centerx<close_tree.rect.centerx and close_tree.rect.centerx-skier.rect.centerx<64 and skier.rect.centerx>100:
+                speed = skier.turn(-1)
+                hold = 0
+            elif hold>10 and skier.rect.centerx>=540:
+                speed = skier.turn(-1)
+                hold = 0
+            elif hold>10 and skier.rect.centerx<=100:
+                speed = skier.turn(1)
+                hold = 0
+            else:
+                hold += 1
+
             # --更新当前游戏帧的数据
             skier.move()
             distance += speed[1]
+            #窗口大小是640*640，所以设计了两块背景（1280*640），在屏幕之外生成新的障碍物，避免障碍突然出现
+            #移动时是做卷动屏幕的计算
+            #当distance大于等于640的时候，背景的上半部分已经移出了实际显示区域，
+            #可以在上半部重新生成障碍物。
             if distance >= 640 and obstaclesflag == 0:
                 obstaclesflag = 1
                 obstacles0 = self.createObstacles(20, 29)
                 obstacles = self.AddObstacles(obstacles0, obstacles1)
+            #当distance等于1280时，背景的下半部分刚好移出实际显示区域，要在。
             if distance >= 1280 and obstaclesflag == 1:
                 obstaclesflag = 0
                 distance -= 1280
@@ -153,6 +193,7 @@ class SkiGame(PygameBaseGame):
                     obstacle.location[1] = obstacle.location[1] - 1280
                 obstacles1 = self.createObstacles(10, 19)
                 obstacles = self.AddObstacles(obstacles0, obstacles1)
+            #移动障碍物，就是把纵坐标减去移动的距离
             for obstacle in obstacles:
                 obstacle.move(distance)
             # --碰撞检测
@@ -172,16 +213,17 @@ class SkiGame(PygameBaseGame):
             # --更新屏幕
             self.updateFrame(screen, obstacles, skier, score)
             clock.tick(cfg.FPS)
-    '''创建障碍物'''
+    '''创建障碍物，按照逻辑的行列范围，20行10列'''
     def createObstacles(self, s, e, num=10):
         obstacles = pygame.sprite.Group()
         locations = []
         for i in range(num):
             row = random.randint(s, e)
             col = random.randint(0, 9)
+            #障碍物的大小是64*64，窗口大小640*640，就是10行10列，这里的20是边框
             location  = [col * 64 + 20, row * 64 + 20]
             if location not in locations:
-                locations.append(location)
+                locations.append(location)  #这个列表是避免生成的障碍物重叠
                 attribute = random.choice(['tree', 'flag'])
                 image = self.resource_loader.images[attribute]
                 obstacle = ObstacleSprite(image, location, attribute)
@@ -222,7 +264,6 @@ class SkiGame(PygameBaseGame):
         screen.blit(score_text, pos)
     '''更新当前帧的游戏画面'''
     def updateFrame(self, screen, obstacles, skier, score):
-        screen.fill((255, 255, 255))
         obstacles.draw(screen)
         screen.blit(skier.image, skier.rect)
         self.showScore(screen, score)

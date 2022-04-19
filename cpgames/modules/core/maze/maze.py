@@ -19,15 +19,15 @@ class Config():
     # 根目录
     rootdir = os.path.split(os.path.abspath(__file__))[0]
     # FPS
-    FPS = 12000
+    FPS = 100
     # 屏幕大小
     SCREENSIZE = (800, 625)
     # 标题
     TITLE = '走迷宫小游戏 —— Charles的皮卡丘'
     # 块大小
     BLOCKSIZE = 15
-    #MAZESIZE = (35, 50) # num_rows * num_cols
-    MAZESIZE = (10, 10) # num_rows * num_cols
+    MAZESIZE = (35, 50) # num_rows * num_cols
+    #MAZESIZE = (10, 10) # num_rows * num_cols
     BORDERSIZE = (25, 50) # 25 * 2 + 50 * 15 = 800, 50 * 2 + 35 * 15 = 625
     # 背景音乐路径
     BGM_PATH = os.path.join(rootdir, 'resources/audios/bgm.mp3')
@@ -87,7 +87,7 @@ class MazeGame(PygameBaseGame):
                 dt = clock.tick(cfg.FPS)
                 
                 is_move = False
-                # ----↑↓←→控制hero
+                # ----↑↓←→控制hero，只是保留原来手动玩游戏的代码，在自动模式下没用。
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         QuitGame()
@@ -99,73 +99,72 @@ class MazeGame(PygameBaseGame):
                         elif event.key == pygame.K_LEFT:
                             is_move = hero_now.move('left', maze_now)
                         elif event.key == pygame.K_RIGHT:
-                            #is_move = hero_now.move('right', maze_now)
-                            screen.fill(BG_COLOR)
-                            blocks_list = maze_now.blocks_list
-                            directions = ['up', 'down', 'left', 'right']
-                            blocks_around = dict(zip(directions, [None]*4))
-                            block_next = None
-                            count = 0
-                            # 查看上边block，条件是判断不是最顶上的block
-                            if not block_now.has_walls[0]:
-                                block_now_top = blocks_list[block_now.coordinate[1]-1][block_now.coordinate[0]]
-                                if block_now_top.is_visited == False:
-                                    blocks_around['up'] = block_now_top
-                                    count += 1
-                            # 查看下边block
-                            if not block_now.has_walls[1]:
-                                block_now_bottom = blocks_list[block_now.coordinate[1]+1][block_now.coordinate[0]]
-                                if block_now_bottom.is_visited == False:
-                                    blocks_around['down'] = block_now_bottom
-                                    count += 1
-                            # 查看左边block
-                            if not block_now.has_walls[2]:
-                                block_now_left = blocks_list[block_now.coordinate[1]][block_now.coordinate[0]-1]
-                                if block_now_left.is_visited == False:
-                                    blocks_around['left'] = block_now_left
-                                    count += 1
-                            # 查看右边block
-                            if not block_now.has_walls[3]:
-                                block_now_right = blocks_list[block_now.coordinate[1]][block_now.coordinate[0]+1]
-                                if block_now_right.is_visited == False:
-                                    blocks_around['right'] = block_now_right
-                                    count += 1
-                            #上面一段把当前块的上下左右块都放入到blocks_around里了
+                            is_move = hero_now.move('right', maze_now)
+
+                screen.fill(BG_COLOR)
+                blocks_list = maze_now.blocks_list
+                directions = ['up', 'down', 'left', 'right']
+                blocks_around = dict(zip(directions, [None]*4))
+                count = 0
+                # 查看上边block，条件是判断不是最顶上的block
+                if not block_now.has_walls[0]:
+                    block_now_top = blocks_list[block_now.coordinate[1]-1][block_now.coordinate[0]]
+                    if block_now_top.is_visited == False:
+                        blocks_around['up'] = block_now_top
+                        count += 1
+                # 查看下边block
+                if not block_now.has_walls[1]:
+                    block_now_bottom = blocks_list[block_now.coordinate[1]+1][block_now.coordinate[0]]
+                    if block_now_bottom.is_visited == False:
+                        blocks_around['down'] = block_now_bottom
+                        count += 1
+                # 查看左边block
+                if not block_now.has_walls[2]:
+                    block_now_left = blocks_list[block_now.coordinate[1]][block_now.coordinate[0]-1]
+                    if block_now_left.is_visited == False:
+                        blocks_around['left'] = block_now_left
+                        count += 1
+                # 查看右边block
+                if not block_now.has_walls[3]:
+                    block_now_right = blocks_list[block_now.coordinate[1]][block_now.coordinate[0]+1]
+                    if block_now_right.is_visited == False:
+                        blocks_around['right'] = block_now_right
+                        count += 1
+                #上面一段把当前块的上下左右块都放入到blocks_around里了
                             
-                            if count > 0:
-                                while True:
-                                    direction = random.choice(directions)
-                                    if blocks_around[direction] == None:
-                                        continue
+                if count > 0:
+                    while True:
+                        direction = random.choice(directions)
+                        if blocks_around[direction] == None:
+                            continue
                                     
-                                    #把移动方向和当前block压栈是为了走入死胡同后可以退回来
-                                    direction_array.append(direction)
-                                    records.append(block_now)
-                                    block_now = blocks_around.get(direction)
-                                    block_now.is_visited = True
-                                    is_move = hero_now.move(direction, maze_now)
-                                    
-                                    path.append(hero_now.rect.center)
-                                    break
-                            else:
-                                #如果走入死胡同，从移动方向栈中弹出上一步的移动方向，反向移动回到上一步
-                                pre_direction = direction_array.pop()
-                                if pre_direction=='up':
-                                    hero_now.move('down', maze_now)
-                                elif pre_direction=='down':
-                                    hero_now.move('up', maze_now)
-                                elif pre_direction=='left':
-                                    hero_now.move('right', maze_now)
-                                elif pre_direction=='right':
-                                    hero_now.move('left', maze_now)
+                        #把移动方向和当前block压栈是为了走入死胡同后可以退回来
+                        direction_array.append(direction)
+                        records.append(block_now)
+                        block_now = blocks_around.get(direction)
+                        block_now.is_visited = True
+                        is_move = hero_now.move(direction, maze_now)
+                        path.append(hero_now.rect.center)
+                        break
+                else:
+                    #如果走入死胡同，从移动方向栈中弹出上一步的移动方向，反向移动回到上一步
+                    pre_direction = direction_array.pop()
+                    if pre_direction=='up':
+                        hero_now.move('down', maze_now)
+                    elif pre_direction=='down':
+                        hero_now.move('up', maze_now)
+                    elif pre_direction=='left':
+                        hero_now.move('right', maze_now)
+                    elif pre_direction=='right':
+                        hero_now.move('left', maze_now)
                                 
-                                block_now = records.pop()
-                                #block_now = records.pop()
-                                path.pop()                
-                            p1 = start_point
-                            for point in path:
-                                pygame.draw.line( screen,RED,p1, point,2)
-                                p1 = point
+                    block_now = records.pop()
+                    path.pop()                
+                p1 = start_point
+                for point in path:
+                    pygame.draw.line( screen,RED,p1, point,2)
+                    p1 = point
+                
                 #随机移动的代码
                 '''
                 while not is_move:
@@ -195,7 +194,6 @@ class MazeGame(PygameBaseGame):
                 if (hero_now.coordinate[0] == cfg.MAZESIZE[1] - 1) and (hero_now.coordinate[1] == cfg.MAZESIZE[0] - 1):
                     break
                 pygame.display.update()
-                is_move = False     #只是为了加断点，无用语句
             # --更新最优成绩
             if best_scores == 'None':
                 best_scores = num_steps

@@ -11,6 +11,7 @@ import pygame
 import random
 from ...utils import QuitGame
 from ..base import PygameBaseGame
+import math
 
 
 '''配置类'''
@@ -132,6 +133,7 @@ class SkiGame(PygameBaseGame):
         speed = [0, 6]
 
         RED = (255,0,0)
+        BLUE = (0,0,255)
         hold = 0
 
         # 游戏主循环
@@ -154,21 +156,56 @@ class SkiGame(PygameBaseGame):
             for obstacle in obstacles:
                 if obstacle.attribute=="flag" or obstacle.rect.centery<skier.rect.centery-32:
                     continue
-                dd = (skier.rect.centerx-obstacle.rect.centerx)**2+(skier.rect.centery-obstacle.rect.centery)**2
+                #方向向左滑，不管右边的障碍物
+                if skier.direction<=0 and obstacle.rect.centerx>=skier.rect.centerx:
+                    continue
+                if skier.direction>0 and obstacle.rect.centerx<skier.rect.centerx:
+                    continue
+                
+                dd = math.sqrt((skier.rect.centerx-obstacle.rect.centerx)**2+(skier.rect.centery-obstacle.rect.centery)**2)
                 if close_tree_distance>dd:
                     close_tree_distance = dd
                     close_tree = obstacle
-            pygame.draw.line( screen,RED,skier.rect.center, close_tree.rect.center,2)
-            if hold>10 and skier.rect.centerx>=close_tree.rect.centerx and skier.rect.centerx-close_tree.rect.centerx<64 and skier.rect.centerx<540:
+            if close_tree:
+                pygame.draw.line( screen,RED,skier.rect.center, close_tree.rect.center,2)
+            close_flag_distance = 100000000000000000
+            close_flag = None
+            for obstacle in obstacles:
+                if obstacle.attribute=="tree" or obstacle.rect.centery<skier.rect.centery-32:
+                    continue
+                #方向向左滑，不管右边的障碍物
+                if skier.direction<=0 and obstacle.rect.centerx>=skier.rect.centerx:
+                    continue
+                if skier.direction>0 and obstacle.rect.centerx<skier.rect.centerx:
+                    continue
+                dd = math.sqrt((skier.rect.centerx-obstacle.rect.centerx)**2+(skier.rect.centery-obstacle.rect.centery)**2)
+                if close_flag_distance>dd:
+                    close_flag_distance = dd
+                    close_flag = obstacle
+            if close_flag:
+                pygame.draw.line( screen,BLUE,skier.rect.center, close_flag.rect.center,2)
+            if close_tree and hold>2 and skier.rect.centerx>=close_tree.rect.centerx and skier.rect.centerx-close_tree.rect.centerx<64 and skier.rect.centerx<540:
+                speed = skier.turn(1)
+                speed = skier.turn(1)
+                speed = skier.turn(1)
                 speed = skier.turn(1)
                 hold = 0
-            elif hold>10 and skier.rect.centerx<close_tree.rect.centerx and close_tree.rect.centerx-skier.rect.centerx<64 and skier.rect.centerx>100:
+            elif close_tree and  hold>2 and skier.rect.centerx<close_tree.rect.centerx and close_tree.rect.centerx-skier.rect.centerx<64 and skier.rect.centerx>100:
+                speed = skier.turn(-1)
+                speed = skier.turn(-1)
+                speed = skier.turn(-1)
                 speed = skier.turn(-1)
                 hold = 0
-            elif hold>10 and skier.rect.centerx>=540:
+            elif hold>2 and skier.rect.centerx>=540:
+                speed = skier.turn(-1)
+                speed = skier.turn(-1)
+                speed = skier.turn(-1)
                 speed = skier.turn(-1)
                 hold = 0
-            elif hold>10 and skier.rect.centerx<=100:
+            elif hold>2 and skier.rect.centerx<=100:
+                speed = skier.turn(1)
+                speed = skier.turn(1)
+                speed = skier.turn(1)
                 speed = skier.turn(1)
                 hold = 0
             else:

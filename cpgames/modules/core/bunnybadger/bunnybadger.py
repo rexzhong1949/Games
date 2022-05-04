@@ -6,9 +6,11 @@ Author:
 微信公众号: 
     Charles的皮卡丘
 '''
+from cmath import rect
 import os
 import math
 import random
+from tkinter import CENTER
 import pygame
 from ...utils import QuitGame
 from ..base import PygameBaseGame
@@ -20,7 +22,7 @@ class Config():
     # 根目录
     rootdir = os.path.split(os.path.abspath(__file__))[0]
     # FPS
-    FPS = 100
+    FPS = 60
     # 屏幕大小
     SCREENSIZE = (640, 480)
     # 标题
@@ -62,9 +64,9 @@ class BunnyBadgerGame(PygameBaseGame):
         # 初始化
         screen, resource_loader, cfg = self.screen, self.resource_loader, self.cfg
         # 播放背景音乐
-        resource_loader.playbgm()
+        #resource_loader.playbgm()
         # 定义兔子
-        bunny = BunnySprite(image=resource_loader.images.get('rabbit'), position=(100, 100))
+        bunny = BunnySprite(image=resource_loader.images.get('rabbit'), position=(100,100))
         # 跟踪玩家的精度变量, 记录了射出的箭头数和被击中的獾的数量.
         acc_record = [0., 0.]
         # 生命值
@@ -76,11 +78,14 @@ class BunnyBadgerGame(PygameBaseGame):
         badguy = BadguySprite(resource_loader.images.get('badguy'), position=(640, 100))
         badguy_sprites_group.add(badguy)
         # 定义了一个定时器, 使得游戏里经过一段时间后就新建一支獾
-        badtimer = 100
+        badguy_birth_pos = badguy.rect.center
+
+        badtimer = cfg.FPS*2
         badtimer1 = 0
         # 游戏主循环, running变量会跟踪游戏是否结束, exitcode变量会跟踪玩家是否胜利.
         running, exitcode = True, False
         clock = pygame.time.Clock()
+        angle = 0
         while running:
             # --在给屏幕画任何东西之前用黑色进行填充
             screen.fill(0)
@@ -103,9 +108,21 @@ class BunnyBadgerGame(PygameBaseGame):
                     resource_loader.sounds['shoot'].play()
                     acc_record[1] += 1
                     mouse_pos = pygame.mouse.get_pos()
+                    #兔子的大小是64*46
                     angle = math.atan2(mouse_pos[1]-(bunny.rotated_position[1]+32), mouse_pos[0]-(bunny.rotated_position[0]+26))
                     arrow = ArrowSprite(resource_loader.images.get('arrow'), (angle, bunny.rotated_position[0]+32, bunny.rotated_position[1]+26))
+                    #arrow = ArrowSprite(resource_loader.images.get('arrow'), (angle, bunny.rect.left, bunny.rect.top))
                     arrow_sprites_group.add(arrow)
+
+            #疯狂扫射，没有技术含量，能杀死所有獾，但命中率极地。这个游戏的意义在于追求命中率
+            '''
+            angle += 0.3
+            if angle > 3.14/2:
+                angle = 0
+            arrow = ArrowSprite(resource_loader.images.get('arrow'), (angle, bunny.rotated_position[0]+32, bunny.rotated_position[1]+26))
+            arrow_sprites_group.add(arrow)
+            '''
+
             # ----移动兔子
             key_pressed = pygame.key.get_pressed()
             if key_pressed[pygame.K_w]:
@@ -116,19 +133,47 @@ class BunnyBadgerGame(PygameBaseGame):
                 bunny.move(cfg.SCREENSIZE, 'left')
             elif key_pressed[pygame.K_d]:
                 bunny.move(cfg.SCREENSIZE, 'right')
+            
+            #以当前屏幕上的第一支獾为目标，移动到相同高度，水平射出一支箭。也没啥技术含量
+            '''
+            if len(badguy_sprites_group)>0:
+                first_bad = badguy_sprites_group.sprites()[0]
+                if bunny.rect.centery - first_bad.rect.centery > 5:
+                    print(bunny.rect.centery , first_bad.rect.centery)
+                    bunny.move(cfg.SCREENSIZE, 'up')
+                elif bunny.rect.centery - first_bad.rect.centery < -5:
+                    bunny.move(cfg.SCREENSIZE, 'down')
+                    print(bunny.rect.centery , first_bad.rect.centery)
+                else:
+                    arrow = ArrowSprite(resource_loader.images.get('arrow'), (0, bunny.rect.centerx, bunny.rect.centery))
+                    arrow_sprites_group.add(arrow)
+                    acc_record[1] += 1
+                    bunny.move(cfg.SCREENSIZE, 'down')
+            '''        
+            
             # --更新弓箭
             for arrow in arrow_sprites_group:
                 if arrow.update(cfg.SCREENSIZE):
                     arrow_sprites_group.remove(arrow)
             # --更新獾
+            # 定时器到时，在屏幕最右侧，垂直高度随机的位置产生一支新的獾
             if badtimer == 0:
                 badguy = BadguySprite(resource_loader.images.get('badguy'), position=(640, random.randint(50, 430)))
                 badguy_sprites_group.add(badguy)
                 badtimer = 100 - (badtimer1 * 2)
                 badtimer1 = 20 if badtimer1>=20 else badtimer1+2
+                # 已知獾的移动速度是7，从右向左移动，不拐弯。
+                # 箭的速度为10.
+                # 我们希望通过计算来精确的射出一箭，从这只獾出生就注定要一箭射死它。
+                #badguy_birth_pos = badguy.rect.center
+            
+            #pygame.draw.line(screen,(255,0,0),bunny.rect.center,badguy_birth_pos)
+
+
+
             badtimer -= 1
             for badguy in badguy_sprites_group:
-                if badguy.update():
+                if badguy.update():     #update返回True，表明獾击中了兔子窝
                     resource_loader.sounds['hit'].play()
                     healthvalue -= random.randint(4, 8)
                     badguy_sprites_group.remove(badguy)

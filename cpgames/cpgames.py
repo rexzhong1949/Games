@@ -36,24 +36,24 @@ class CPGames():
     '''初始化'''
     def initialize(self):
         supported_games = {
-            'ski': SkiGame,
-            #'maze': MazeGame,
-            #'gobang': GobangGame,
-            #'tetris': TetrisGame,
-            #'pacman': PacmanGame,
-            #'gemgem': GemGemGame,
-            #'tankwar': TankWarGame,
-            #'sokoban': SokobanGame,
-            #'pingpong': PingpongGame,
-            #'trexrush': TRexRushGame,
-            #'bomberman': BomberManGame,
-            #'whacamole': WhacAMoleGame,
-            #'catchcoins': CatchCoinsGame,
-            #'flappybird': FlappyBirdGame,
-            #'angrybirds': AngryBirdsGame,
-            #'magictower': MagicTowerGame,
-            #'aircraftwar': AircraftWarGame,
-            #'bunnybadger': BunnyBadgerGame,
+            #'ski': SkiGame,            #pygame滑雪，已可以自动玩
+            #'maze': MazeGame,          #pygame迷宫，已可以自动玩
+            #'gobang': GobangGame,      #Qt五子棋，可局域网联网
+            #'tetris': TetrisGame,      #Qt俄罗斯方块
+            #'pacman': PacmanGame,      #pygame小精灵吃米
+            #'gemgem': GemGemGame,      #pygame消消乐
+            #'tankwar': TankWarGame,    #pygame坦克大战，可以自己玩
+            #'sokoban': SokobanGame,        #pygame推箱子
+            #'pingpong': PingpongGame,      #pygame打乒乓
+            #'trexrush': TRexRushGame,       #pygame小恐龙
+            #'bomberman': BomberManGame,     #pygame炸弹人
+            #'whacamole': WhacAMoleGame,     #打地鼠
+            #'catchcoins': CatchCoinsGame,   #pygame接金币
+            #'flappybird': FlappyBirdGame,   #pygame飞扬的小鸟
+            #'angrybirds': AngryBirdsGame,  #pygame愤怒小鸟
+            #'magictower': MagicTowerGame,  
+            #'aircraftwar': AircraftWarGame,    #飞机打陨石，可以自动玩
+            'bunnybadger': BunnyBadgerGame,     #pygame兔子和獾射击游戏，可以研究如何自动玩
             #'minesweeper': MineSweeperGame,
             #'greedysnake': GreedySnakeGame,
             #'puzzlepieces': PuzzlePiecesGame,

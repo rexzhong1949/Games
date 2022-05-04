@@ -36,6 +36,7 @@ class BunnySprite(pygame.sprite.Sprite):
         bunny_pos = (self.rect.left-image_rotate.get_rect().width/2, self.rect.top-image_rotate.get_rect().height/2)
         self.rotated_position = bunny_pos
         screen.blit(image_rotate, bunny_pos)
+        
 
 
 '''定义弓箭类'''
@@ -54,8 +55,9 @@ class ArrowSprite(pygame.sprite.Sprite):
         vely = math.sin(self.angle) * self.speed
         self.rect.left += velx
         self.rect.top += vely
+        print("Arrow:",self.rect.left,self.rect.top)
         if self.rect.right < 0 or self.rect.left > screensize[0] or self.rect.top > screensize[1] or self.rect.bottom < 0:
-            return True
+            return True     #弓箭飞出屏幕
         return False
 
 
@@ -71,6 +73,7 @@ class BadguySprite(pygame.sprite.Sprite):
     '''更新獾'''
     def update(self):
         self.rect.left -= self.speed
+        #print("badguy:",self.rect.left,self.rect.top)
         if self.rect.left < 64:
             return True
         return False

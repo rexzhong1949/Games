@@ -55,7 +55,7 @@ class ArrowSprite(pygame.sprite.Sprite):
         vely = math.sin(self.angle) * self.speed
         self.rect.left += velx
         self.rect.top += vely
-        print("Arrow:",self.rect.left,self.rect.top)
+        #print("Arrow:",self.rect.left,self.rect.top)
         if self.rect.right < 0 or self.rect.left > screensize[0] or self.rect.top > screensize[1] or self.rect.bottom < 0:
             return True     #弓箭飞出屏幕
         return False

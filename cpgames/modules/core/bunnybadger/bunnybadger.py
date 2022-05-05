@@ -6,11 +6,14 @@ Author:
 微信公众号: 
     Charles的皮卡丘
 '''
+#from builtins import breakpoint
 from cmath import rect
 import os
 import math
 import random
 from tkinter import CENTER
+from types import DynamicClassAttribute
+from xmlrpc.server import DocXMLRPCRequestHandler
 import pygame
 from ...utils import QuitGame
 from ..base import PygameBaseGame
@@ -66,7 +69,7 @@ class BunnyBadgerGame(PygameBaseGame):
         # 播放背景音乐
         #resource_loader.playbgm()
         # 定义兔子
-        bunny = BunnySprite(image=resource_loader.images.get('rabbit'), position=(100,100))
+        bunny = BunnySprite(image=resource_loader.images.get('rabbit'), position=(100,50))
         # 跟踪玩家的精度变量, 记录了射出的箭头数和被击中的獾的数量.
         acc_record = [0., 0.]
         # 生命值
@@ -164,10 +167,23 @@ class BunnyBadgerGame(PygameBaseGame):
                 badtimer1 = 20 if badtimer1>=20 else badtimer1+2
                 # 已知獾的移动速度是7，从右向左移动，不拐弯。
                 # 箭的速度为10.
-                # 我们希望通过计算来精确的射出一箭，从这只獾出生就注定要一箭射死它。
-                #badguy_birth_pos = badguy.rect.center
-            
-            #pygame.draw.line(screen,(255,0,0),bunny.rect.center,badguy_birth_pos)
+                # 我们希望通过计算来精确的射出一箭，从这只獾出生就注定要死在这只箭下。
+                # 目前基本效果有了，命中率有个70-85%，还要再看看为什么命中率不够高
+                # 计算的方法是，按照tick数推算，计算獾从出生开始移动的坐标，计算獾与兔子间的距离。
+                # 这个距离足够接近10*tick时，就找到了箭与獾的相遇点，再根据这个点计算射箭的角度，把箭射出去
+                for t in range(1,100):
+                    Dx = badguy.rect.centerx-7*t
+                    Dy = badguy.rect.centery
+                    distance_AD = math.sqrt((bunny.rect.centerx-Dx)**2+(bunny.rect.centery-Dy)**2)
+                    if abs(distance_AD-10*t)<5:
+                        print(t,Dx,Dy,distance_AD)
+                        break
+                angle = math.atan(abs(Dy-bunny.rect.centery)/abs(Dx-bunny.rect.centerx))
+                arrow = ArrowSprite(resource_loader.images.get('arrow'), (angle, bunny.rect.centerx, bunny.rect.centery))
+                arrow_sprites_group.add(arrow)
+                #resource_loader.sounds['shoot'].play()
+                acc_record[1] += 1
+                
 
 
 

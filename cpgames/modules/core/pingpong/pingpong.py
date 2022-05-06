@@ -66,9 +66,10 @@ class PingpongGame(PygameBaseGame):
         hit_sound = resource_loader.sounds['hit']
         goal_sound = resource_loader.sounds['goal']
         font = resource_loader.fonts['default50']
-        resource_loader.playbgm()
+        #resource_loader.playbgm()
         # 开始界面
-        game_mode = self.startInterface(screen)
+        #game_mode = self.startInterface(screen)
+        game_mode = 1   #默认单人模式，和电脑玩
         # 游戏主循环
         # --左边球拍(ws控制, 仅双人模式时可控制)
         score_left = 0
@@ -79,6 +80,8 @@ class PingpongGame(PygameBaseGame):
         # --球
         ball = Ball(cfg.IMAGE_PATHS_DICT['ball'], cfg)
         clock = pygame.time.Clock()
+        end_left = 0
+        end_top = 0
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -97,10 +100,44 @@ class PingpongGame(PygameBaseGame):
                     racket_left.move('DOWN')
             else:
                 racket_left.automove(ball)
+            
             # 球运动
             scores = ball.move(ball, racket_left, racket_right, hit_sound, goal_sound)
             score_left += scores[0]
             score_right += scores[1]
+
+            #从球撞到左侧拍子，改变了运行方向之后，计算球反弹后撞击右侧墙壁的点。
+            #移动右侧拍子到撞击点，这个还没有做自动的。另外没有考虑中线发球时直接向右侧移动时不会触发落点提示
+            simu_ball_rect = pygame.Rect(ball.rect.left,ball.rect.top,ball.rect.width,ball.rect.height)
+            simu_speed = ball.speed
+            simu_direction_x = ball.direction_x
+            simu_direction_y = ball.direction_y
+            if pygame.sprite.collide_rect(ball, racket_left):
+                end_left = 0
+                end_top = 0
+                while True:
+                    simu_ball_rect.left = simu_ball_rect.left + simu_speed * simu_direction_x
+                    simu_ball_rect.top = min(max(simu_ball_rect.top + simu_speed * simu_direction_y, 0), ball.cfg.SCREENSIZE[1] - simu_ball_rect.height)
+                    # 撞到上侧的墙
+                    if simu_ball_rect.top == 0:
+                        simu_direction_y = 1
+                        simu_speed += 1
+                    # 撞到下侧的墙
+                    elif simu_ball_rect.top == ball.cfg.SCREENSIZE[1] - simu_ball_rect.height:
+                        simu_direction_y = -1
+                        simu_speed += 1
+                    # 撞到右边的墙
+                    elif simu_ball_rect.right > ball.cfg.SCREENSIZE[0]:
+                        end_left = simu_ball_rect.left
+                        end_top = simu_ball_rect.top
+                        break
+            
+            #画出撞击点
+            if end_top!=0 or end_left!=0:
+                end_rect = pygame.Rect(end_left,end_top,ball.rect.width,ball.rect.height)
+                pygame.draw.rect(screen,(255,0,0),end_rect,5)
+
+
             # 显示
             # --分隔线
             pygame.draw.rect(screen, cfg.WHITE, (247, 0, 6, 500))

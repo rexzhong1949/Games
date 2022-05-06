@@ -44,7 +44,7 @@ class CPGames():
             #'gemgem': GemGemGame,      #pygame消消乐
             #'tankwar': TankWarGame,    #pygame坦克大战，可以自己玩
             #'sokoban': SokobanGame,        #pygame推箱子
-            #'pingpong': PingpongGame,      #pygame打乒乓
+            'pingpong': PingpongGame,      #pygame打乒乓
             #'trexrush': TRexRushGame,       #pygame小恐龙
             #'bomberman': BomberManGame,     #pygame炸弹人
             #'whacamole': WhacAMoleGame,     #打地鼠
@@ -53,7 +53,7 @@ class CPGames():
             #'angrybirds': AngryBirdsGame,  #pygame愤怒小鸟
             #'magictower': MagicTowerGame,  
             #'aircraftwar': AircraftWarGame,    #飞机打陨石，可以自动玩
-            'bunnybadger': BunnyBadgerGame,     #pygame兔子和獾射击游戏，可以研究如何自动玩
+            #'bunnybadger': BunnyBadgerGame,     #pygame兔子和獾射击游戏，可以自动射击
             #'minesweeper': MineSweeperGame,
             #'greedysnake': GreedySnakeGame,
             #'puzzlepieces': PuzzlePiecesGame,

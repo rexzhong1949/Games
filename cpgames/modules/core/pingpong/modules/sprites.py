@@ -24,6 +24,7 @@ class Ball(pygame.sprite.Sprite):
         self.rect.left = self.rect.left + self.speed * self.direction_x
         self.rect.top = min(max(self.rect.top + self.speed * self.direction_y, 0), self.cfg.SCREENSIZE[1] - self.rect.height)
         # 撞到球拍
+        # 在移动球之后，再判断是否碰撞球拍，给了我们机会在move函数之后，仍然能监测到碰撞
         if pygame.sprite.collide_rect(ball, racket_left) or pygame.sprite.collide_rect(ball, racket_right):
             self.direction_x, self.direction_y = -self.direction_x, random.choice([1, -1])
             self.speed += 1

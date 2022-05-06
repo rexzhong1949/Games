@@ -89,6 +89,8 @@ class BunnyBadgerGame(PygameBaseGame):
         running, exitcode = True, False
         clock = pygame.time.Clock()
         angle = 0
+        Dx = 0
+        Dy = 0
         while running:
             # --在给屏幕画任何东西之前用黑色进行填充
             screen.fill(0)
@@ -175,17 +177,21 @@ class BunnyBadgerGame(PygameBaseGame):
                     Dx = badguy.rect.centerx-7*t
                     Dy = badguy.rect.centery
                     distance_AD = math.sqrt((bunny.rect.centerx-Dx)**2+(bunny.rect.centery-Dy)**2)
-                    if abs(distance_AD-10*t)<5:
+                    if abs(distance_AD-10*t)<9:
                         print(t,Dx,Dy,distance_AD)
                         break
-                angle = math.atan(abs(Dy-bunny.rect.centery)/abs(Dx-bunny.rect.centerx))
-                arrow = ArrowSprite(resource_loader.images.get('arrow'), (angle, bunny.rect.centerx, bunny.rect.centery))
-                arrow_sprites_group.add(arrow)
-                #resource_loader.sounds['shoot'].play()
-                acc_record[1] += 1
-                
-
-
+                if t<99:
+                    print("开火-->",t,Dx,Dy,distance_AD)
+                    angle = math.atan(abs(Dy-bunny.rect.centery)/abs(Dx-bunny.rect.centerx))
+                    arrow = ArrowSprite(resource_loader.images.get('arrow'), (angle, bunny.rect.centerx, bunny.rect.centery))
+                    arrow_sprites_group.add(arrow)
+                    #resource_loader.sounds['shoot'].play()
+                    acc_record[1] += 1
+                else:
+                    print("计算失败--->",t,Dx,Dy,distance_AD)
+            
+            pygame.draw.line(screen,(255,0,0),bunny.rect.center,(Dx,Dy))
+            pygame.draw.line(screen,(0,0,255),(Dx,Dy),badguy.rect.center)
 
             badtimer -= 1
             for badguy in badguy_sprites_group:

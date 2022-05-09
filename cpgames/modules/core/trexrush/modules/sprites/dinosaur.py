@@ -40,7 +40,7 @@ class Dinosaur(pygame.sprite.Sprite):
     def jump(self, sounds):
         if self.is_dead or self.is_jumping:
             return
-        sounds['jump'].play()
+        #sounds['jump'].play()
         self.is_jumping = True
         self.movement[1] = -1 * self.speed
     '''低头'''

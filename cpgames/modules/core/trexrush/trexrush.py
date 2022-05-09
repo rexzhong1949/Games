@@ -87,6 +87,31 @@ class TRexRushGame(PygameBaseGame):
                             dino.duck()
                     elif event.type == pygame.KEYUP and event.key == pygame.K_DOWN:
                         dino.unduck()
+                
+                #默认恐龙匍匐前进
+                dino.duck()
+                #根据最近的仙人掌或龙进行闪避
+                closest_cactus = None
+                closest_ptera = None
+                closest_thing = None
+                if len(cactus_sprites_group)>0:
+                    closest_cactus = cactus_sprites_group.sprites()[0]
+                if len(ptera_sprites_group)>0:
+                    closest_ptera = ptera_sprites_group.sprites()[0]
+                if closest_cactus:
+                    closest_thing = closest_cactus
+                    if closest_ptera:
+                        if closest_ptera.rect.centerx < closest_thing.rect.centerx:
+                            closest_thing = closest_ptera
+                else:
+                    closest_thing = closest_ptera
+                
+                if closest_thing:
+                    print(closest_thing.rect.centery,closest_thing.rect.centerx)
+                    if closest_thing.rect.centerx < 200 and closest_thing.rect.centerx>180 and closest_thing.rect.centery>100 :
+                        dino.jump(resource_loader.sounds)
+
+
                 screen.fill(cfg.BACKGROUND_COLOR)
                 # --随机添加云
                 if len(cloud_sprites_group) < 5 and random.randrange(0, 300) == 10:
@@ -114,8 +139,8 @@ class TRexRushGame(PygameBaseGame):
                     score = min(score, 99999)
                     if score > highest_score:
                         highest_score = score
-                    if score % 100 == 0:
-                        resource_loader.sounds['point'].play()
+                    #if score % 100 == 0:
+                    #    resource_loader.sounds['point'].play()
                     if score % 1000 == 0:
                         ground.speed -= 1
                         for item in cloud_sprites_group:

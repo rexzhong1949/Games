@@ -53,11 +53,11 @@ class CPGames():
             #'angrybirds': AngryBirdsGame,  #pygame愤怒小鸟
             #'magictower': MagicTowerGame,  
             #'aircraftwar': AircraftWarGame,    #飞机打陨石，可以自动玩
-            'bunnybadger': BunnyBadgerGame,     #pygame兔子和獾射击游戏，可以自动射击
+            #'bunnybadger': BunnyBadgerGame,     #pygame兔子和獾射击游戏，可以自动射击
             #'minesweeper': MineSweeperGame,
             #'greedysnake': GreedySnakeGame,
             #'puzzlepieces': PuzzlePiecesGame,
-            #'towerdefense': TowerDefenseGame,
+            'towerdefense': TowerDefenseGame,
             #'alieninvasion': AlienInvasionGame,
             #'breakoutclone': BreakoutcloneGame,
             #'twentyfourpoint': TwentyfourPointGame,

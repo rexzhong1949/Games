@@ -37,7 +37,7 @@ class CPGames():
     def initialize(self):
         supported_games = {
             #'ski': SkiGame,            #pygame滑雪，已可以自动玩
-            #'maze': MazeGame,          #pygame迷宫，已可以自动玩
+            'maze': MazeGame,          #pygame迷宫，已可以自动玩
             #'gobang': GobangGame,      #Qt五子棋，可局域网联网
             #'tetris': TetrisGame,      #Qt俄罗斯方块
             #'pacman': PacmanGame,      #pygame小精灵吃米
@@ -57,7 +57,7 @@ class CPGames():
             #'minesweeper': MineSweeperGame,
             #'greedysnake': GreedySnakeGame,
             #'puzzlepieces': PuzzlePiecesGame,
-            'towerdefense': TowerDefenseGame,
+            #'towerdefense': TowerDefenseGame,
             #'alieninvasion': AlienInvasionGame,
             #'breakoutclone': BreakoutcloneGame,
             #'twentyfourpoint': TwentyfourPointGame,

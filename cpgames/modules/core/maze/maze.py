@@ -36,7 +36,7 @@ class Config():
         'hero': os.path.join(rootdir, 'resources/images/hero.png'),
     }
 
-
+    
 '''走迷宫小游戏'''
 class MazeGame(PygameBaseGame):
     game_type = 'maze'
@@ -54,8 +54,12 @@ class MazeGame(PygameBaseGame):
         #Interface(screen, cfg, 'game_start')
         # 记录关卡数
         num_levels = 0
+        # 记录每一局的步数，用于计算通关平均值
+        win_step_records = []
         # 记录最少用了多少步通关
         best_scores = 'None'
+        # 记录平均通关步数，用它来衡量自动算法的效果
+        avg_scores = 'None'
         # 关卡循环切换
         while True:
             num_levels += 1
@@ -83,6 +87,10 @@ class MazeGame(PygameBaseGame):
             '''我希望设计出自动探索迷宫，并记录下所走路径，并能把它用红色线条描绘出来的功能'''
             RED = (255,0,0)
             BG_COLOR = (199, 237, 204)
+
+            # 选择一种自动探索算法
+            method_choose = 1
+
             while True:
                 dt = clock.tick(cfg.FPS)
                 
@@ -134,9 +142,12 @@ class MazeGame(PygameBaseGame):
                             
                 if count > 0:
                     while True:
-                        direction = random.choice(directions)
-                        if blocks_around[direction] == None:
-                            continue
+                        #怎样取得更好成绩？这里是随机选择一个方向，如果有更好的策略也许可以有更好的成绩。
+                        # 方式一：随机选择一个方向
+                        if method_choose==1:
+                            direction = random.choice(directions)
+                            if blocks_around[direction] == None:
+                                continue
                                     
                         #把移动方向和当前block压栈是为了走入死胡同后可以退回来
                         direction_array.append(direction)
@@ -188,12 +199,18 @@ class MazeGame(PygameBaseGame):
                 # ----显示一些信息
                 showText(screen, font, 'LEVELDONE: %d' % num_levels, (255, 0, 0), (10, 10))
                 showText(screen, font, 'BESTSCORE: %s' % best_scores, (255, 0, 0), (210, 10))
-                showText(screen, font, 'USEDSTEPS: %s' % num_steps, (255, 0, 0), (410, 10))
+                showText(screen, font, 'AVG—SCORE: %s' % avg_scores, (255, 0, 0), (410, 10))
+                showText(screen, font, 'USEDSTEPS: %s' % num_steps, (255, 0, 0), (610, 10))
                 showText(screen, font, 'S: your starting point    D: your destination', (255, 0, 0), (10, 600))
                 # ----判断游戏是否胜利
                 if (hero_now.coordinate[0] == cfg.MAZESIZE[1] - 1) and (hero_now.coordinate[1] == cfg.MAZESIZE[0] - 1):
                     break
                 pygame.display.update()
+            
+            # 将当前局的步数记录下来，并计算平均步数
+            win_step_records.append(num_steps)
+            avg_scores = int(sum(win_step_records)/len(win_step_records))
+
             # --更新最优成绩
             if best_scores == 'None':
                 best_scores = num_steps
